@@ -157,7 +157,7 @@ export default function Model() {
           <section className="card span-6">
             <h2>Class distribution</h2>
             <p className="sub">Jenks natural breaks into five classes — relative within Ogun State, not absolute probabilities.</p>
-            <ClassBar shares={shares(geo.grid.L.cls)} compare={scenario ? shares(scenario.cls) : null} baseLabel="Baseline (90 m pipeline)" compareLabel={`Scenario: ${scenario?.name}`} height={18} />
+            <ClassBar shares={shares(geo.grid.L.cls)} compare={scenario ? shares(scenario.cls) : null} baseLabel="Baseline (pipeline classes)" compareLabel={`Scenario: ${scenario?.name}`} height={18} />
             <p className="fine">Baseline breaks (index): {model.classification.breaks.slice(1, 5).map((b) => b.toFixed(3)).join(' · ')}{scenario && <> — scenario: {scenario.breaks.slice(1, 5).map((b) => b.toFixed(3)).join(' · ')}</>}</p>
           </section>
           <section className="card span-6">
