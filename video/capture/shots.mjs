@@ -219,6 +219,14 @@ const SHOTS = {
   async s4_phone(page, ctx) {
     const css = fs.readFileSync(path.join(ROOT, '..', 'dist', 'index.html'), 'utf8').match(/href="(\/assets\/index-[^"]+\.css)"/)[1];
     await page.route(`${BASE}/__stage`, (r) => r.fulfill({ contentType: 'text/html', body: stageHtml(css) }));
+    // The app forbids being framed (CSP frame-ancestors 'none'). For this recording only, the phone mock-up
+    // embeds the real app in an iframe, so that one header is removed from the iframe's document response.
+    await page.route(`${BASE}/report`, async (r) => {
+      const resp = await r.fetch();
+      const headers = { ...resp.headers() };
+      delete headers['content-security-policy'];
+      await r.fulfill({ response: resp, headers });
+    });
     await open(page, '/__stage');
     const frame = await (await page.waitForSelector('#phone-screen')).contentFrame();
     await frame.waitForLoadState('networkidle');
