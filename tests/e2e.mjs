@@ -35,9 +35,11 @@ async function check(name, fn) {
 const assert = (c, m) => { if (!c) throw new Error(m); };
 
 const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'floodsense-e2e-'));
-const env = { ...process.env, FLOODSENSE_DATA_DIR: dataDir, PORT: String(PORT), FLOODSENSE_ADMIN_EMAIL: EMAIL, FLOODSENSE_ADMIN_PASSWORD: PASSWORD, FLOODSENSE_ADMIN_NAME: 'E2E Verifier' };
-spawnSync(process.execPath, ['--disable-warning=ExperimentalWarning', 'server/setup.js'], { cwd: root, env, stdio: 'ignore' });
-const server = spawn(process.execPath, ['--disable-warning=ExperimentalWarning', 'server/index.js'], { cwd: root, env, stdio: 'ignore' });
+const sim = !!process.env.E2E_SERVER;
+const env = { ...process.env, TURSO_DATABASE_URL: sim ? `file:${path.join(dataDir, 'turso-sim.db')}` : '', TURSO_AUTH_TOKEN: '', FLOODSENSE_SECRET: sim ? 'e2e-simulated-vercel-secret-0123456789' : '', FLOODSENSE_DATA_DIR: dataDir, PORT: String(PORT), FLOODSENSE_ADMIN_EMAIL: EMAIL, FLOODSENSE_ADMIN_PASSWORD: PASSWORD, FLOODSENSE_ADMIN_NAME: 'E2E Verifier' };
+spawnSync(process.execPath, ['server/setup.js'], { cwd: root, env, stdio: 'ignore' });
+// E2E_SERVER lets the suite run against another entry point (e.g. scripts/vercel-sim.mjs)
+const server = spawn(process.execPath, [process.env.E2E_SERVER || 'server/index.js'], { cwd: root, env, stdio: 'ignore' });
 for (let i = 0; i < 50; i++) { try { if ((await fetch(`${BASE}/api/health`)).ok) break; } catch { /* starting */ } await new Promise((r) => setTimeout(r, 200)); }
 
 const browser = await chromium.launch();

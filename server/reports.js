@@ -2,8 +2,6 @@
  * Community flood reports: submission, public read model, safeguards and statistics.
  */
 import crypto from 'node:crypto';
-import fs from 'node:fs';
-import path from 'node:path';
 import { clientHash } from './auth.js';
 import { config } from './config.js';
 import { db, nowIso } from './db.js';
@@ -17,12 +15,12 @@ export const SEVERITY = {
 };
 
 const REF_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
-function newRef() {
+async function newRef() {
   for (;;) {
     const bytes = crypto.randomBytes(6);
     let s = 'FS-';
     for (const b of bytes) s += REF_ALPHABET[b % REF_ALPHABET.length];
-    if (!db.prepare('SELECT 1 FROM reports WHERE ref = ?').get(s)) return s;
+    if (!(await db.get('SELECT 1 FROM reports WHERE ref = ?', s))) return s;
   }
 }
 
@@ -78,11 +76,11 @@ function stripPngMetadata(buf) {
 }
 
 // ---- rate limiting (per salted client hash, in-database so it survives restarts) -----------
-function rateLimited(ipHash) {
+async function rateLimited(ipHash) {
   const hourAgo = new Date(Date.now() - 3600e3).toISOString();
   const dayAgo = new Date(Date.now() - 86400e3).toISOString();
-  const h = db.prepare('SELECT COUNT(*) n FROM reports WHERE ip_hash = ? AND created_at > ?').get(ipHash, hourAgo).n;
-  const d = db.prepare('SELECT COUNT(*) n FROM reports WHERE ip_hash = ? AND created_at > ?').get(ipHash, dayAgo).n;
+  const h = (await db.get('SELECT COUNT(*) n FROM reports WHERE ip_hash = ? AND created_at > ?', ipHash, hourAgo)).n;
+  const d = (await db.get('SELECT COUNT(*) n FROM reports WHERE ip_hash = ? AND created_at > ?', ipHash, dayAgo)).n;
   return h >= config.limits.reportsPerHour || d >= config.limits.reportsPerDay;
 }
 
@@ -121,14 +119,14 @@ export function validateReport(body) {
 }
 
 /** Automated quality signals. They never reject a report — they prioritise human review. */
-export function qualityFlags(r, ipHash) {
+export async function qualityFlags(r, ipHash) {
   const flags = [];
   if (/https?:\/\/|www\./i.test(r.description)) flags.push('contains_link');
   const dayAgo = new Date(Date.now() - 86400e3).toISOString();
-  const same = db.prepare('SELECT COUNT(*) n FROM reports WHERE description = ? AND created_at > ?').get(r.description, dayAgo).n;
+  const same = (await db.get('SELECT COUNT(*) n FROM reports WHERE description = ? AND created_at > ?', r.description, dayAgo)).n;
   if (same > 0) flags.push('repeated_text');
   if (ipHash) {
-    const n = db.prepare('SELECT COUNT(*) n FROM reports WHERE ip_hash = ? AND created_at > ?').get(ipHash, dayAgo).n;
+    const n = (await db.get('SELECT COUNT(*) n FROM reports WHERE ip_hash = ? AND created_at > ?', ipHash, dayAgo)).n;
     if (n >= 3) flags.push('many_from_same_client');
   }
   if (r.geo_class && r.geo_class <= 1 && r.severity >= 3) flags.push('severe_in_very_low_susceptibility');
@@ -136,7 +134,7 @@ export function qualityFlags(r, ipHash) {
   return flags;
 }
 
-export function createReport(req, photo) {
+export async function createReport(req, photoFile) {
   if (clean(req.body.website, 200)) return { status: 400, body: { error: 'Submission rejected.' } }; // honeypot
   const tokErr = checkFormToken(req.body.form_token);
   if (tokErr === 'too_fast') return { status: 429, body: { error: 'That was very fast — please check your report and submit again.' } };
@@ -146,34 +144,36 @@ export function createReport(req, photo) {
   const ctx = geoContext(value.lat, value.lon);
   if (!ctx.inside) return { status: 422, body: { error: 'This location is outside Ogun State. The FloodSense pilot currently covers Ogun State only.', fields: { location: 'Outside Ogun State pilot area.' } } };
   const ipHash = clientHash(req);
-  if (rateLimited(ipHash)) return { status: 429, body: { error: 'Too many reports from this device recently. Please try again later.' } };
+  if (await rateLimited(ipHash)) return { status: 429, body: { error: 'Too many reports from this device recently. Please try again later.' } };
 
-  let photo_file = null;
-  if (photo) {
-    const kind = sniff(photo.buffer);
+  let photo = null;
+  if (photoFile) {
+    const kind = sniff(photoFile.buffer);
     if (!kind) return { status: 422, body: { error: 'Photo must be a JPEG or PNG image.', fields: { photo: 'Unsupported image type.' } } };
-    const data = kind === 'jpg' ? stripJpegMetadata(photo.buffer) : stripPngMetadata(photo.buffer);
-    photo_file = `${crypto.randomUUID()}.${kind}`;
-    fs.writeFileSync(path.join(config.uploadsDir, photo_file), data);
+    const data = kind === 'jpg' ? stripJpegMetadata(photoFile.buffer) : stripPngMetadata(photoFile.buffer);
+    photo = { id: crypto.randomUUID(), mime: kind === 'jpg' ? 'image/jpeg' : 'image/png', data };
   }
   const g = ctx.grid || {};
   const row = {
-    ...value, ref: newRef(), lga_id: ctx.lga?.id ?? null, lga_name: ctx.lga?.name ?? null,
+    ...value, ref: await newRef(), lga_id: ctx.lga?.id ?? null, lga_name: ctx.lga?.name ?? null,
     geo_class: g.cls ?? null, geo_index: g.index ?? null, geo_hand_m: g.hand_m ?? null,
     geo_dist_m: g.dist_m ?? null, geo_elev_m: g.elev_m ?? null, geo_ref_water: g.ref_water ?? null,
   };
-  const flags = qualityFlags(row, ipHash);
+  const flags = await qualityFlags(row, ipHash);
   const now = nowIso();
-  const info = db.prepare(`INSERT INTO reports (ref, lat, lon, location_method, lga_id, lga_name, community, severity, description,
+  const stmts = [];
+  if (photo) stmts.push(['INSERT INTO photos (id, mime, data, created_at) VALUES (?,?,?,?)', photo.id, photo.mime, photo.data, now]);
+  stmts.push([`INSERT INTO reports (ref, lat, lon, location_method, lga_id, lga_name, community, severity, description,
       observed_at, created_at, updated_at, status, flagged, flags, photo_file, contact_name, contact_phone, contact_email,
       contact_consent, ip_hash, geo_class, geo_index, geo_hand_m, geo_dist_m, geo_elev_m, geo_ref_water, is_demo)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?, 'pending', ?,?,?,?,?,?,?,?,?,?,?,?,?,?,0)`).run(
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?, 'pending', ?,?,?,?,?,?,?,?,?,?,?,?,?,?,0)`,
     row.ref, row.lat, row.lon, row.location_method, row.lga_id, row.lga_name, row.community || null, row.severity,
-    row.description, row.observed_at, now, now, flags.length ? 1 : 0, JSON.stringify(flags), photo_file,
+    row.description, row.observed_at, now, now, flags.length ? 1 : 0, JSON.stringify(flags), photo?.id ?? null,
     row.contact_name, row.contact_phone, row.contact_email, row.contact_consent, ipHash,
-    row.geo_class, row.geo_index, row.geo_hand_m, row.geo_dist_m, row.geo_elev_m, row.geo_ref_water);
-  db.prepare('INSERT INTO review_events (report_id, actor, action, to_status, note, created_at) VALUES (?,?,?,?,?,?)')
-    .run(info.lastInsertRowid, 'reporter', 'submitted', 'pending', flags.length ? `Automated flags: ${flags.join(', ')}` : null, now);
+    row.geo_class, row.geo_index, row.geo_hand_m, row.geo_dist_m, row.geo_elev_m, row.geo_ref_water]);
+  stmts.push(['INSERT INTO review_events (report_id, actor, action, to_status, note, created_at) VALUES ((SELECT id FROM reports WHERE ref = ?),?,?,?,?,?)',
+    row.ref, 'reporter', 'submitted', 'pending', flags.length ? `Automated flags: ${flags.join(', ')}` : null, now]);
+  await db.batch(stmts);
   return { status: 201, body: { ref: row.ref, status: 'pending', lga: row.lga_name, geo_class: row.geo_class, created_at: now } };
 }
 
@@ -195,34 +195,34 @@ export function publicReport(r) {
   };
 }
 
-export function listPublic({ includeDemo }) {
-  const rows = db.prepare(`SELECT * FROM reports WHERE status IN ('pending','verified') ${includeDemo ? '' : 'AND is_demo = 0'}
-                           ORDER BY created_at DESC LIMIT 2000`).all();
+export async function listPublic({ includeDemo }) {
+  const rows = await db.all(`SELECT * FROM reports WHERE status IN ('pending','verified') ${includeDemo ? '' : 'AND is_demo = 0'}
+                           ORDER BY created_at DESC LIMIT 2000`);
   return rows.map(publicReport);
 }
 
-export function statusByRef(ref) {
-  const r = db.prepare('SELECT * FROM reports WHERE ref = ?').get(String(ref).toUpperCase().slice(0, 12));
+export async function statusByRef(ref) {
+  const r = await db.get('SELECT * FROM reports WHERE ref = ?', String(ref).toUpperCase().slice(0, 12));
   if (!r) return null;
-  const events = db.prepare(`SELECT action, to_status, created_at FROM review_events WHERE report_id = ? ORDER BY id`).all(r.id);
+  const events = await db.all('SELECT action, to_status, created_at FROM review_events WHERE report_id = ? ORDER BY id', r.id);
   return { ...publicReport(r), status: r.status, timeline: events };
 }
 
-export function nearbyReports(lat, lon, radius_m, excludeId, sinceIso) {
+export async function nearbyReports(lat, lon, radius_m, excludeId, sinceIso) {
   const dLat = radius_m / 111000;
   const dLon = radius_m / (111000 * Math.cos((lat * Math.PI) / 180));
-  const rows = db.prepare(`SELECT id, ref, lat, lon, status, severity, observed_at, created_at, is_demo FROM reports
-      WHERE lat BETWEEN ? AND ? AND lon BETWEEN ? AND ? AND id != ? ${sinceIso ? 'AND observed_at > ?' : ''}`)
-    .all(lat - dLat, lat + dLat, lon - dLon, lon + dLon, excludeId ?? -1, ...(sinceIso ? [sinceIso] : []));
+  const rows = await db.all(`SELECT id, ref, lat, lon, status, severity, observed_at, created_at, is_demo FROM reports
+      WHERE lat BETWEEN ? AND ? AND lon BETWEEN ? AND ? AND id != ? ${sinceIso ? 'AND observed_at > ?' : ''}`,
+    lat - dLat, lat + dLat, lon - dLon, lon + dLon, excludeId ?? -1, ...(sinceIso ? [sinceIso] : []));
   return rows.map((x) => ({ ...x, distance_m: Math.round(haversine(lat, lon, x.lat, x.lon)) }))
     .filter((x) => x.distance_m <= radius_m).sort((a, b) => a.distance_m - b.distance_m);
 }
 
 // ---- statistics (computed live from the database) ------------------------------------------
-export function stats({ includeDemo, days = 30 }) {
+export async function stats({ includeDemo, days = 30 }) {
   const demo = includeDemo ? '' : 'AND is_demo = 0';
-  const all = db.prepare(`SELECT id, status, severity, lga_name, geo_class, created_at, observed_at, reviewed_at, flagged, is_demo
-                          FROM reports WHERE 1=1 ${demo}`).all();
+  const all = await db.all(`SELECT id, status, severity, lga_name, geo_class, created_at, observed_at, reviewed_at, flagged, is_demo
+                          FROM reports WHERE 1=1 ${demo}`);
   const by = (k) => all.reduce((m, r) => ((m[r[k]] = (m[r[k]] || 0) + 1), m), {});
   const status = { pending: 0, verified: 0, rejected: 0, duplicate: 0, ...by('status') };
   const lga = {};
@@ -265,10 +265,17 @@ export function stats({ includeDemo, days = 30 }) {
 }
 
 /** Delete reporter contact details N days after review (data minimisation). */
-export function purgeContacts() {
+export async function purgeContacts() {
   const cutoff = new Date(Date.now() - config.contactRetentionDays * 86400e3).toISOString();
-  const r = db.prepare(`UPDATE reports SET contact_name = NULL, contact_phone = NULL, contact_email = NULL, contact_purged_at = ?
+  const r = await db.run(`UPDATE reports SET contact_name = NULL, contact_phone = NULL, contact_email = NULL, contact_purged_at = ?
       WHERE reviewed_at IS NOT NULL AND reviewed_at < ? AND contact_purged_at IS NULL
-      AND (contact_name IS NOT NULL OR contact_phone IS NOT NULL OR contact_email IS NOT NULL)`).run(nowIso(), cutoff);
+      AND (contact_name IS NOT NULL OR contact_phone IS NOT NULL OR contact_email IS NOT NULL)`, nowIso(), cutoff);
   return r.changes;
+}
+
+/** Photo bytes for a report (served by the API, never as a static file). */
+export async function photoFor(photoId) {
+  if (!photoId) return null;
+  const p = await db.get('SELECT mime, data FROM photos WHERE id = ?', photoId);
+  return p ? { mime: p.mime, data: Buffer.from(p.data) } : null;
 }

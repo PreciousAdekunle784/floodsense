@@ -17,12 +17,14 @@ FloodSense is a working GIS prototype that connects three sources of flood intel
 
 * Methodology and data sources: [`docs/METHODOLOGY.md`](docs/METHODOLOGY.md)
 * Live demonstration script and judge Q&A: [`docs/DEMO_GUIDE.md`](docs/DEMO_GUIDE.md)
+* Deploying on Vercel + Turso: [`docs/DEPLOY_VERCEL.md`](docs/DEPLOY_VERCEL.md)
 
 ---
 
 ## Quick start (runs offline once installed)
 
-Requirements: **Node.js 22.13 or newer** (uses the built-in `node:sqlite`). No database server and no API keys are needed.
+Requirements: **Node.js 22**. No database server and no API keys are needed: locally FloodSense stores data in a
+SQLite file through the libSQL client (the same client talks to Turso when deployed on Vercel).
 
 ```bash
 npm install
@@ -60,6 +62,8 @@ npm test
 ```bash
 npm run build && npm run e2e
 ```
+
+`npm run e2e:vercel` runs the same suite against a local simulation of the Vercel deployment (`scripts/vercel-sim.mjs`).
 
 `npm test` runs 8 unit tests (AHP maths, Jenks, point-in-polygon, validation, EXIF stripping, password hashing).
 `npm run e2e` starts an isolated server with a temporary database and drives the real UI in Chromium through 30
@@ -107,9 +111,11 @@ pipeline/            Python GIS pipeline (rasterio, GeoPandas, pysheds, xarray, 
   05_web_export.py   Web-Mercator grid bundles, vectors, Terrarium DEM tiles → public/data
   run_all.sh         rebuilds everything
 public/data/         exported GIS layers served to the browser and read by the server (committed: ~36 MB)
+api/index.js         Vercel serverless function (wraps server/app.js)
 server/              Node.js + Express 5 API
-  index.js           routes, security headers, static hosting
-  db.js              SQLite schema (node:sqlite)
+  app.js             API routes and security headers (shared by local server and Vercel)
+  index.js           local / self-hosted entry: static hosting + listen
+  db.js              SQLite schema via libSQL (local file or Turso)
   auth.js            scrypt passwords, sessions, CSRF, throttling
   reports.js         validation, safeguards, photo sanitising, public read model, statistics
   admin.js           verification API, audit, data quality, demo reset
@@ -123,14 +129,16 @@ src/                 React 19 + MapLibre GL 5 client (Vite)
   components/        MapView, LayerPanel, Inspector, ReportFlow, SearchBox, DemoGuide
   pages/             Explore, Insights, Model, Data, Prepare, Admin, Track
 tests/e2e.mjs        Playwright end-to-end suite
+scripts/vercel-sim.mjs  local simulation of the Vercel deployment
+vercel.json          Vercel build, function, rewrite and header configuration
 ```
 
 **Data flow.** The pipeline writes compact rasters (`grid-core.bin.gz`, 3.2 MB) that both the browser and the
 server read. The browser renders and re-classifies the susceptibility surface itself; the server uses the same grid
-to attach LGA and terrain context to each report. Reports live in SQLite (`data/floodsense.db`); photos in
-`data/uploads/`.
+to attach LGA and terrain context to each report. Reports and photos live in SQLite — a local file
+(`data/floodsense.db`) or, on Vercel, a Turso database.
 
-### Database schema (SQLite)
+### Database schema (SQLite / libSQL)
 
 | Table | Purpose |
 |---|---|
@@ -138,7 +146,9 @@ to attach LGA and terrain context to each report. Reports live in SQLite (`data/
 | `sessions` | SHA-256 of session token, CSRF token, expiry |
 | `reports` | location, LGA, severity, description, times, status, flags, duplicate link, photo file; private contact fields; GIS context (`geo_class`, `geo_index`, `geo_hand_m`, `geo_dist_m`, `geo_elev_m`, `geo_ref_water`); review fields; `is_demo` |
 | `review_events` | audit trail per report (actor, action, from/to status, note) |
+| `photos` | metadata-stripped photo bytes, served only through the API (public once verified) |
 | `audit_log` | sign-ins, failed sign-ins, demo resets |
+| `login_failures` | throttling of failed sign-ins (works across serverless instances) |
 
 The schema is created automatically on first start. `server/sql/postgis_schema.sql` gives the equivalent PostGIS
 design with spatial indexes, an LGA-assignment trigger and a privacy-safe public view (not executed in this build).
@@ -162,17 +172,17 @@ See [`.env.example`](.env.example). Key variables: `PORT`, `FLOODSENSE_DATA_DIR`
 
 ## Deployment
 
-FloodSense is a single Node.js process serving the API and the built UI, so it fits any Node 22 host (a VPS,
-Render, Railway, Fly.io).
+**Vercel + Turso (recommended for a public URL).** Step-by-step guide: [`docs/DEPLOY_VERCEL.md`](docs/DEPLOY_VERCEL.md).
+In short: create a Turso database, run `npm run setup:turso` from your computer, import the repository into
+Vercel, and set `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN`, `FLOODSENSE_SECRET` and `NODEJS_HELPERS=0`.
+`vercel build` and the simulated deployment are tested here; a live Vercel/Turso deployment has not been performed.
+
+**Any Node 22 host (VPS, Render, Railway).** FloodSense is also a single Node process serving the API and the built UI:
 
 1. `npm ci && npm run build`
-2. Set `NODE_ENV=production` (enables Secure cookies — HTTPS required), `TRUST_PROXY=1` behind a proxy or PaaS,
-   and `FLOODSENSE_DATA_DIR` to a **persistent volume**.
+2. Set `NODE_ENV=production` (Secure cookies — HTTPS required), `TRUST_PROXY=1` behind a proxy, and either
+   `FLOODSENSE_DATA_DIR` on a **persistent volume** or the Turso variables.
 3. `npm run setup` once (with `FLOODSENSE_ADMIN_PASSWORD` set), then `npm start`.
-4. Put it behind HTTPS (required for secure cookies and for phone GPS).
-
-It has **not** been deployed as part of this build. For multi-instance production, move to PostgreSQL/PostGIS
-and object storage for photos.
 
 ## Rebuilding the GIS layers
 

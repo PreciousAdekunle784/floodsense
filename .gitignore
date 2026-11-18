@@ -8,3 +8,5 @@ pipeline/data/
 .env.*
 !.env.example
 test-results/
+.vercel/
+!.env.turso.example

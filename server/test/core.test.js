@@ -6,6 +6,7 @@ import path from 'node:path';
 import { test } from 'node:test';
 
 process.env.FLOODSENSE_DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'fs-unit-'));
+process.env.TURSO_DATABASE_URL = '';
 const { ahp, matrixFromUpper } = await import('../../src/lib/ahp.js');
 const { jenks } = await import('../../src/lib/grid.js');
 const geo = await import('../geo.js');
