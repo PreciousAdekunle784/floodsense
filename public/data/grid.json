@@ -1,0 +1,136 @@
+{
+ "crs": "EPSG:3857",
+ "cell_m": 150.0,
+ "width": 1447,
+ "height": 1268,
+ "origin": [
+  298371.64557772235,
+  890350.1480688808
+ ],
+ "bounds_merc": [
+  298371.64557772235,
+  700186.3190491465,
+  515421.64557772235,
+  700150.1480688808
+ ],
+ "layers": [
+  {
+   "name": "lga",
+   "bundle": "core",
+   "type": "uint8",
+   "offset": 0
+  },
+  {
+   "name": "m_hand",
+   "bundle": "core",
+   "type": "uint8",
+   "offset": 1834796
+  },
+  {
+   "name": "m_dist",
+   "bundle": "core",
+   "type": "uint8",
+   "offset": 3669592
+  },
+  {
+   "name": "m_slope",
+   "bundle": "core",
+   "type": "uint8",
+   "offset": 5504388
+  },
+  {
+   "name": "m_twi",
+   "bundle": "core",
+   "type": "uint8",
+   "offset": 7339184
+  },
+  {
+   "name": "m_rain",
+   "bundle": "core",
+   "type": "uint8",
+   "offset": 9173980
+  },
+  {
+   "name": "m_lulc",
+   "bundle": "core",
+   "type": "uint8",
+   "offset": 11008776
+  },
+  {
+   "name": "cls",
+   "bundle": "core",
+   "type": "uint8",
+   "offset": 12843572
+  },
+  {
+   "name": "ref",
+   "bundle": "core",
+   "type": "uint8",
+   "offset": 14678368
+  },
+  {
+   "name": "lc",
+   "bundle": "core",
+   "type": "uint8",
+   "offset": 16513164
+  },
+  {
+   "name": "builtup",
+   "bundle": "core",
+   "type": "uint8",
+   "offset": 18347960
+  },
+  {
+   "name": "elev",
+   "bundle": "detail",
+   "type": "uint16",
+   "offset": 0
+  },
+  {
+   "name": "hand",
+   "bundle": "detail",
+   "type": "uint16",
+   "offset": 3669592
+  },
+  {
+   "name": "dist",
+   "bundle": "detail",
+   "type": "uint16",
+   "offset": 7339184
+  },
+  {
+   "name": "slope",
+   "bundle": "detail",
+   "type": "uint16",
+   "offset": 11008776
+  },
+  {
+   "name": "twi",
+   "bundle": "detail",
+   "type": "uint16",
+   "offset": 14678368
+  },
+  {
+   "name": "rain",
+   "bundle": "detail",
+   "type": "uint16",
+   "offset": 18347960
+  }
+ ],
+ "bundle_bytes_gz": {
+  "core": 3166608,
+  "detail": 5187600
+ },
+ "encoding": {
+  "m_*": "membership x255",
+  "elev": "metres + 100",
+  "hand": "decimetres",
+  "dist": "metres",
+  "slope": "degrees x100",
+  "twi": "x100",
+  "rain": "mm/yr",
+  "builtup": "percent of cell",
+  "ref": "0 none, 1 observed intermittent water, 2 permanent water",
+  "cls": "1-5 susceptibility class, 6 permanent water"
+ }
+}

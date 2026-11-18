@@ -1,0 +1,62 @@
+{
+ "terrain": {
+  "dem_source": "Copernicus DEM GLO-90 (DSM), 9 tiles N06-N08 E002-E004",
+  "crs": "EPSG:32631",
+  "cell_m": 90.0,
+  "grid": [
+   3066,
+   3688
+  ],
+  "conditioning": "fill_pits -> fill_depressions -> resolve_flats (pysheds)",
+  "flow_model": "D8",
+  "stream_threshold_km2": 5.0,
+  "stream_threshold_cells": 617,
+  "hand_reference": "D8 flow path to nearest channel cell",
+  "twi": "ln((acc+1)*cell / max(tan(slope),0.001))",
+  "n_channel_segments": 9233,
+  "completed_utc": "2026-11-18T11:30:15+00:00"
+ },
+ "factors": {
+  "landcover": "ESA WorldCover 2021 v200, read at 40 m overview, mode-resampled to 90 m",
+  "landcover_class_cells": {
+   "0": 276715,
+   "10": 5107850,
+   "20": 1899194,
+   "30": 1171071,
+   "40": 1149878,
+   "50": 476128,
+   "60": 10484,
+   "80": 1140629,
+   "90": 54117,
+   "95": 21342
+  },
+  "surface_water": "JRC Global Surface Water v1.4 occurrence 1984-2021, averaged to 90 m",
+  "rainfall": "GPM IMERG (NASA POWER v10) climatology 2001-2020, 0.1 deg, bilinear to 90 m",
+  "rain_annual_range_mm": [
+   1095.767333984375,
+   2629.773681640625
+  ],
+  "completed_utc": "2026-11-18T11:31:45+00:00"
+ },
+ "model": {
+  "weights": {
+   "hand": 0.3547,
+   "dist": 0.2184,
+   "slope": 0.1197,
+   "twi": 0.1197,
+   "rain": 0.0678,
+   "lulc": 0.1197
+  },
+  "cr": 0.0052,
+  "breaks": [
+   0.046,
+   0.2415,
+   0.3668,
+   0.5233,
+   0.6933,
+   0.9949
+  ],
+  "auc": 0.914,
+  "completed_utc": "2026-11-18T11:35:16+00:00"
+ }
+}
