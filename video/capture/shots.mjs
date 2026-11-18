@@ -153,8 +153,8 @@ const SHOTS = {
         const p = ease((shot.n - flyStart) / (flyLen - 1));
         await shot.jump({ center: [from.center[0] + (to.center[0] - from.center[0]) * p, from.center[1] + (to.center[1] - from.center[1]) * p], zoom: from.zoom + (to.zoom - from.zoom) * p });
       }
-      await shot.overlay('chips', chips(t), { left: '50%', top: '26px', transform: 'translateX(-50%)' }, env(t, times[0] - 0.2, T / FPS - 0.25));
-      await shot.overlay('ahp', ahpLine, { left: '50%', top: '150px', transform: 'translateX(-50%)', background: 'rgba(9,14,17,.85)', padding: '8px 14px', borderRadius: '6px' }, env(t, ahpAt + 0.4, T / FPS - 0.25));
+      await shot.overlay('chips', chips(t), { left: '918px', top: '78px', transform: 'translateX(-50%)' }, env(t, times[0] - 0.2, T / FPS - 0.25));
+      await shot.overlay('ahp', ahpLine, { left: '918px', top: '196px', transform: 'translateX(-50%)', whiteSpace: 'nowrap', background: 'rgba(9,14,17,.9)', padding: '9px 16px', borderRadius: '6px' }, env(t, ahpAt + 0.4, T / FPS - 0.25));
       await shot.snap();
     }
     await page.evaluate(() => window.__cap.clear());

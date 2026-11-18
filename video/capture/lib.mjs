@@ -53,7 +53,7 @@ export const OVERLAY_SCRIPT = () => {
       .cap-lt .t { font: 600 40px/1.08 'Barlow Condensed', sans-serif; letter-spacing: .01em; }
       .cap-lt .s { font: 400 19px/1.4 'IBM Plex Sans', sans-serif; color: #a9b6bc; margin-top: 8px; }
       .cap-chips { display: flex; gap: 10px; }
-      .cap-chip { background: rgba(9,14,17,.92); border: 1px solid rgba(255,255,255,.12); border-radius: 10px; padding: 12px 16px 12px 14px; color: #e9eef0; min-width: 150px; box-shadow: 0 12px 30px rgba(0,0,0,.4); }
+      .cap-chip { background: rgba(9,14,17,.92); border: 1px solid rgba(255,255,255,.12); border-radius: 10px; padding: 12px 16px 12px 14px; color: #e9eef0; min-width: 136px; box-shadow: 0 12px 30px rgba(0,0,0,.4); }
       .cap-chip b { display: block; font: 600 25px/1.05 'Barlow Condensed', sans-serif; }
       .cap-chip span { display: block; font: 500 15px 'IBM Plex Mono', monospace; color: #f08a5d; margin-top: 6px; }
       .cap-chip i { display: block; height: 4px; border-radius: 2px; background: #e2683c; margin-top: 8px; }
