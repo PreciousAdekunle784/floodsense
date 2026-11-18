@@ -220,7 +220,8 @@ const SHOTS = {
     const css = fs.readFileSync(path.join(ROOT, '..', 'dist', 'index.html'), 'utf8').match(/href="(\/assets\/index-[^"]+\.css)"/)[1];
     await page.route(`${BASE}/__stage`, (r) => r.fulfill({ contentType: 'text/html', body: stageHtml(css) }));
     await open(page, '/__stage');
-    const frame = page.frame({ url: /\/report$/ }) || page.frames().find((f) => f.url().endsWith('/report'));
+    const frame = await (await page.waitForSelector('#phone-screen')).contentFrame();
+    await frame.waitForLoadState('networkidle');
     await frame.waitForFunction(() => window.__fsMaps?.length, null, { timeout: 90000 });
     await frame.waitForTimeout(1500);
     const shot = new Shot(page, 's4_phone');
