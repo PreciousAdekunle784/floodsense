@@ -173,7 +173,7 @@ const SHOTS = {
     await shot.snap(8);
     // bring the point and panel together: zoom in, keeping the point left of the panel
     await shot.setCursor(0, 0, false);
-    await shot.fly({ center: [INSPECT.lon + 0.045, INSPECT.lat - 0.004], zoom: 11.6 }, 60);
+    await shot.fly({ center: [INSPECT.lon + 0.07, INSPECT.lat - 0.006], zoom: 11.0 }, 60);
     const row = page.locator('.contrib li').first();
     const [rx, ry] = await shot.center(row);
     await shot.setCursor(rx - 160, ry + 160, true);
