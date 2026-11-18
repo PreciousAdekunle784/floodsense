@@ -235,7 +235,8 @@ const SHOTS = {
     const shot = new Shot(page, 's4_phone');
     shot.frame = frame;
     const off = await page.evaluate(() => { const r = document.getElementById('phone-screen').getBoundingClientRect(); return [r.left, r.top]; });
-    await shot.jump({ center: [REPORT_AT.lon, REPORT_AT.lat + 0.004], zoom: 13.4 });
+    // place the report point in the strip of map visible above the reporting sheet
+    await frame.evaluate((p) => { const m = window.__fsMaps.at(-1); m.stop(); m.jumpTo({ center: [p.lon, p.lat], zoom: 12.3 }); const vis = document.querySelector('.side-panel').getBoundingClientRect().top - m.getContainer().getBoundingClientRect().top; m.panBy([0, m.getContainer().clientHeight / 2 - vis * 0.55], { duration: 0 }); }, REPORT_AT);
     const steps = (k) => page.evaluate((i) => window.stage.step(i), k);
     const inner = async (loc) => { const b = await loc.boundingBox(); return [b.x + b.width / 2, b.y + b.height / 2]; };
     shot.cur.touch = true;
