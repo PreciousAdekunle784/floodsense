@@ -2,3 +2,4 @@
 build/
 out/
 assets/tts/
+__pycache__/
