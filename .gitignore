@@ -1,0 +1,10 @@
+node_modules/
+dist/
+data/
+pipeline/.venv/
+pipeline/data/
+*.log
+.env
+.env.*
+!.env.example
+test-results/
