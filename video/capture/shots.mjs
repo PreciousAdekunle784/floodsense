@@ -87,13 +87,14 @@ const SHOTS = {
     await open(page, '/');
     await waitMap(page);
     const shot = new Shot(page, 's3_overview');
-    const cam = await page.evaluate(() => { const m = window.__fsMaps.at(-1); const c = m.getCenter(); return { center: [c.lng, c.lat], zoom: m.getZoom() }; });
-    const z0 = cam.zoom - 0.12;
+    // frame the state in the area left clear by the side panels and the lower third
+    const cam = await page.evaluate(() => { const m = window.__fsMaps.at(-1); const c = m.cameraForBounds([[2.70, 6.30], [4.61, 7.95]], { padding: { left: 350, right: 430, top: 30, bottom: 190 } }); return { center: [c.center.lng, c.center.lat], zoom: c.zoom }; });
+    const z0 = cam.zoom - 0.04;
     const lt = lowerThird('Module A · Geospatial map', 'All 20 LGAs of Ogun State', 'Copernicus DEM · ESA WorldCover · NASA GPM IMERG · JRC Global Surface Water');
     const T = shot.total;
     for (let i = 0; i < T; i++) {
       const t = i / FPS;
-      await shot.jump({ center: cam.center, zoom: z0 + 0.3 * easeSine(i / (T - 1)) });
+      await shot.jump({ center: cam.center, zoom: z0 + 0.1 * easeSine(i / (T - 1)) });
       await shot.overlay('lt', lt, { left: '356px', bottom: '44px' }, env(t, 0.6, T / FPS - 0.5));
       if (t > 4.6 && !shot.cur.vis) await shot.setCursor(980, 640, true, false);
       if (shot.cur.vis) await shot.setCursor(980 + (520 - 980) * ease(clamp01((t - 4.6) / 2)), 640 + (300 - 640) * ease(clamp01((t - 4.6) / 2)), true);
