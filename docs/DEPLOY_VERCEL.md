@@ -82,6 +82,15 @@ Keep the output for the next step. It signs form tokens and salts IP hashes, and
 
 ## 5. Check the deployment
 
+From your computer, run the read-only check (17 checks; it changes nothing):
+
+```bash
+npm run check:live -- https://<your-project>.vercel.app
+```
+
+Then by hand:
+
+
 1. Open `https://<your-project>.vercel.app/api/health`. It should return `{"ok":true,…,"reports":24}`.
 2. Open the site. The map, layers, Insights and Model pages should load.
 3. Submit a test report from your phone (GPS works because Vercel serves HTTPS).

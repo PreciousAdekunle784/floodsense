@@ -18,7 +18,8 @@
     "setup:turso": "node --env-file=.env.turso server/setup.js",
     "demo:reset:turso": "node --env-file=.env.turso server/setup.js --reset-demo",
     "vercel:sim": "node --env-file-if-exists=.env.vercel-sim scripts/vercel-sim.mjs",
-    "e2e:vercel": "E2E_SERVER=scripts/vercel-sim.mjs node tests/e2e.mjs"
+    "e2e:vercel": "E2E_SERVER=scripts/vercel-sim.mjs node tests/e2e.mjs",
+    "check:live": "node scripts/check-live.mjs"
   },
   "dependencies": {
     "@fontsource/barlow-condensed": "^5.3.0",
