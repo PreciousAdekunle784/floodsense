@@ -1,0 +1,86 @@
+{
+  "voice": "af_heart",
+  "speed": 0.94,
+  "lines": [
+    {
+      "id": "n01",
+      "scene": 1,
+      "text": "Every rainy season, communities along the Ogun River face the same question. Will the water reach us this time?"
+    },
+    {
+      "id": "n02",
+      "scene": 1,
+      "text": "In June twenty twenty-six, satellite records show rainfall over Ogun State forty-one percent above normal. Downstream of the Oyan Dam, in places like Isheri, Akute and Magboro, residents have been urged to move to higher ground."
+    },
+    {
+      "id": "n03",
+      "scene": 1,
+      "text": "Yet the people most affected rarely have a clear picture of where the risk lies, or of what is happening on the ground."
+    },
+    {
+      "id": "n04",
+      "scene": 2,
+      "text": "FloodSense brings two kinds of intelligence together. Geographic analysis of the land itself, and verified reports from the community."
+    },
+    {
+      "id": "n05",
+      "scene": 3,
+      "text": "This is the FloodSense map. All twenty local government areas of Ogun State, built from open satellite data."
+    },
+    {
+      "id": "n06",
+      "scene": 3,
+      "text": "From the Copernicus elevation model, we traced how water flows across the state. Every channel, ordered by size."
+    },
+    {
+      "id": "n07",
+      "scene": 3,
+      "text": "Six factors. Height above the nearest stream, distance to a channel, slope, wetness, rainfall and land cover. They are weighted using the Analytic Hierarchy Process, to map flood susceptibility."
+    },
+    {
+      "id": "n08",
+      "scene": 3,
+      "text": "Tap any location, and FloodSense explains why it scores the way it does. Here, beside the Ogun River in Ifo, the ground sits less than a metre above the river channel."
+    },
+    {
+      "id": "n09",
+      "scene": 3,
+      "text": "We checked the model against thirty-seven years of Landsat water observations. The highest class covers eleven percent of the land, but holds seventy-three percent of the water ever observed."
+    },
+    {
+      "id": "n10",
+      "scene": 4,
+      "text": "Now, a resident sees flooding in their street. They open FloodSense on their phone, drop a pin, choose how severe it is, describe what they see, and send."
+    },
+    {
+      "id": "n11",
+      "scene": 4,
+      "text": "The report reaches the map straight away, but only as pending. Its text stays hidden, and its location is blurred, until someone checks it."
+    },
+    {
+      "id": "n12",
+      "scene": 5,
+      "text": "Because not every report is accurate, trained verifiers review each one. FloodSense shows them the terrain at that exact spot, nearby reports, and automatic spam checks."
+    },
+    {
+      "id": "n13",
+      "scene": 5,
+      "text": "Once verified, the report is published, and the dashboard updates directly from the database."
+    },
+    {
+      "id": "n14",
+      "scene": 6,
+      "text": "Planners can test their own assumptions, re-weighting the model and recalculating the whole state in seconds."
+    },
+    {
+      "id": "n15",
+      "scene": 6,
+      "text": "FloodSense does not forecast floods. It connects what the land tells us with what communities see, so that residents, local governments and emergency managers can prepare before the water rises."
+    },
+    {
+      "id": "n16",
+      "scene": 7,
+      "text": "Floods may be difficult to prevent, but better information can help communities prepare. With FloodSense, we are bringing geographic intelligence closer to the people who need it."
+    }
+  ]
+}

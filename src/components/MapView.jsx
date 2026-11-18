@@ -122,6 +122,8 @@ const MapView = forwardRef(function MapView({
       cooperativeGestures: false,
     });
     mapRef.current = map;
+    // automation hook (tests / video capture): lets scripts drive the camera deterministically
+    (window.__fsMaps ||= []).push(map);
     map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right');
     map.addControl(new maplibregl.ScaleControl({ unit: 'metric', maxWidth: 110 }), 'bottom-right');
     const markReady = () => { if (map.getSource('susc')) setReady(true); };
@@ -157,7 +159,7 @@ const MapView = forwardRef(function MapView({
       handlers.current.onMapClick?.({ lon: e.lngLat.lng, lat: e.lngLat.lat });
     });
     setZoomBucket(Math.floor(map.getZoom() * 2) / 2);
-    return () => { setReady(false); map.remove(); mapRef.current = null; };
+    return () => { setReady(false); window.__fsMaps = (window.__fsMaps || []).filter((m) => m !== map); map.remove(); mapRef.current = null; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [geo?.grid]);
 

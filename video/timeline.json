@@ -1,0 +1,24 @@
+{
+  "fps": 30,
+  "xfade": 0.4,
+  "shots": [
+    { "id": "s1_terrain",   "kind": "app", "vo": ["n01"], "lead": 0.6, "tail": 0.7 },
+    { "id": "s1_evidence",  "kind": "gfx", "vo": ["n02"], "lead": 0.3, "tail": 0.7 },
+    { "id": "s1_question",  "kind": "gfx", "vo": ["n03"], "lead": 0.3, "tail": 1.0 },
+    { "id": "s2_intro",     "kind": "gfx", "vo": ["n04"], "lead": 2.0, "tail": 1.4 },
+    { "id": "s3_overview",  "kind": "app", "vo": ["n05"], "lead": 0.5, "tail": 0.6 },
+    { "id": "s3_layers",    "kind": "app", "vo": ["n06"], "lead": 0.3, "tail": 1.2 },
+    { "id": "s3_model",     "kind": "app", "vo": ["n07"], "lead": 0.3, "tail": 1.0 },
+    { "id": "s3_inspect",   "kind": "app", "vo": ["n08"], "lead": 0.3, "tail": 1.4 },
+    { "id": "s3_validate",  "kind": "app", "vo": ["n09"], "lead": 0.3, "tail": 1.2 },
+    { "id": "s4_phone",     "kind": "app", "vo": ["n10"], "lead": 0.6, "tail": 5.0 },
+    { "id": "s4_pending",   "kind": "app", "vo": ["n11"], "lead": 0.4, "tail": 1.2 },
+    { "id": "s5_verify",    "kind": "app", "vo": ["n12"], "lead": 0.3, "tail": 2.6 },
+    { "id": "s5_dashboard", "kind": "app", "vo": ["n13"], "lead": 0.3, "tail": 2.0 },
+    { "id": "s6_scenario",  "kind": "app", "vo": ["n14"], "lead": 0.3, "tail": 2.2 },
+    { "id": "s6_bigger",    "kind": "app", "vo": ["n15"], "lead": 0.4, "tail": 1.0 },
+    { "id": "s7_close",     "kind": "gfx", "vo": ["n16"], "lead": 0.8, "tail": 4.2 }
+  ],
+  "short": ["s2_intro", "s3_model", "s3_inspect", "s4_phone", "s4_pending", "s5_verify", "s5_dashboard", "s7_close"],
+  "split_n02_at": 7.2
+}
